@@ -40,7 +40,6 @@ install_requires = [
     "requests==2.21.0",
     "Pillow==6.2.0",
     "dhash==1.3",
-    'gplaycli==3.26',
     'protobuf==3.11.0',
     "jellyfish==0.5.6",
     'cryptography==2.6.1',

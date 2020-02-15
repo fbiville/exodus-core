@@ -3,7 +3,7 @@ from collections import namedtuple
 from cryptography.x509.name import _SENTINEL, ObjectIdentifier, _NAMEOID_DEFAULT_TYPE, _ASN1Type, NameAttribute
 from hashlib import sha256, sha1
 from PIL import Image
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
 import binascii
 import dhash
 import itertools
@@ -12,12 +12,12 @@ import os
 import re
 import requests
 import six
-import subprocess
 # import time
 import zipfile
 
 from androguard.core.bytecodes import axml
 from androguard.core.bytecodes.apk import APK
+from androguard.misc import AnalyzeAPK
 from future.moves import sys
 # from gplaycli import gplaycli
 
@@ -168,27 +168,18 @@ class StaticAnalysis:
         if self.classes is not None:
             return self.classes
 
-        class_regex = re.compile(r'classes.*\.dex')
-        with TemporaryDirectory() as tmp_dir:
-            with zipfile.ZipFile(self.apk_path, "r") as apk_zip:
-                class_infos = (info for info in apk_zip.infolist() if class_regex.search(info.filename))
-                for info in class_infos:
-                    apk_zip.extract(info, tmp_dir)
-            dexdump = which('dexdump')
-            cmd = '{} {}/classes*.dex | perl -n -e\'/[A-Z]+((?:\w+\/)+\w+)/ && print "$1\n"\'|sort|uniq'.format(
-                dexdump, tmp_dir)
-            try:
-                self.classes = subprocess.check_output(
-                    cmd,
-                    stderr=subprocess.STDOUT,
-                    shell=True,
-                    universal_newlines=True
-                ).splitlines()
-                logging.debug('{} classes found in {}'.format(len(self.classes), self.apk_path))
-                return self.classes
-            except subprocess.CalledProcessError:
-                logging.error('Unable to decode {}'.format(self.apk_path))
-                raise Exception('Unable to decode the APK')
+        a, dex, dx = AnalyzeAPK(self.apk_path)
+        class_names = []
+        for d in dex:
+            for class_name in d.get_classes_names():
+                for n in dx.find_methods(classname=class_name):
+                    for other_class, callee, offset in n.get_xref_to():
+                        callee_signature = callee.get_class_name()
+                        if "$" not in callee_signature and callee_signature not in class_names:
+                            class_names.append(callee_signature)
+
+        self.classes = class_names
+        return class_names
 
     def detect_trackers_in_list(self, class_list):
         """

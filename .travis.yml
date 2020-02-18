@@ -8,7 +8,6 @@ install:
   - pip install flake8
 
 script:
-  - export PATH="$PATH:$PWD/exodus_core/dexdump/"
   - mkdir -p ~/.config/gplaycli/
   - mkdir -p ~/.cache/gplaycli/
   - cp ./conf/gplaycli.conf ~/.config/gplaycli/gplaycli.conf

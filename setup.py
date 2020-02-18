@@ -31,11 +31,6 @@ if sys.platform == 'darwin' or sys.platform == 'win32':
     print("Unfortunately, we do not support your platform %s" % sys.platform)
     sys.exit(1)
 
-if which('dexdump') is None:
-    print("Unable to find dexdump executable, please install it.")
-    print("On Debian-like OS, run sudo apt-get install dexdump")
-    sys.exit(1)
-
 install_requires = [
     "requests==2.21.0",
     "Pillow==6.2.0",
